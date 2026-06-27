@@ -4,560 +4,634 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Decision Advisor</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --surface-0: #f1f0eb;
-      --surface-1: #f8f7f4;
-      --surface-2: #ffffff;
-      --text-primary: #1a1a18;
-      --text-secondary: #5f5e5a;
-      --text-muted: #9a9890;
-      --text-accent: #185fa5;
-      --text-success: #3b6d11;
-      --text-warning: #854f0b;
-      --text-danger: #a32d2d;
-      --border: rgba(0,0,0,0.1);
-      --border-strong: rgba(0,0,0,0.18);
-      --border-accent: #85b7eb;
-      --bg-accent: #e6f1fb;
-      --bg-success: #eaf3de;
-      --bg-warning: #faeeda;
-      --bg-danger: #fcebeb;
-      --fill-accent: #378add;
-      --fill-accent-hover: #185fa5;
-      --on-accent: #ffffff;
-      --radius: 8px;
-      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --surface-0: #f1f0eb; --surface-1: #f8f7f4; --surface-2: #ffffff;
+      --text-primary: #1a1a18; --text-secondary: #5f5e5a; --text-muted: #9a9890;
+      --text-accent: #185fa5; --text-success: #3b6d11; --text-warning: #854f0b; --text-danger: #a32d2d;
+      --border: rgba(0,0,0,0.1); --border-strong: rgba(0,0,0,0.18); --border-accent: #85b7eb;
+      --bg-accent: #e6f1fb; --bg-success: #eaf3de; --bg-warning: #faeeda; --bg-danger: #fcebeb;
+      --fill-accent: #378add; --fill-accent-hover: #185fa5; --on-accent: #fff;
+      --radius: 8px; --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-
     @media (prefers-color-scheme: dark) {
       :root {
-        --surface-0: #1a1a18;
-        --surface-1: #232320;
-        --surface-2: #2c2c2a;
-        --text-primary: #f0ede8;
-        --text-secondary: #a8a59f;
-        --text-muted: #6b6966;
-        --text-accent: #85b7eb;
-        --text-success: #97c459;
-        --text-warning: #ef9f27;
-        --text-danger: #f09595;
-        --border: rgba(255,255,255,0.1);
-        --border-strong: rgba(255,255,255,0.18);
-        --border-accent: #185fa5;
-        --bg-accent: #0c447c;
-        --bg-success: #27500a;
-        --bg-warning: #633806;
-        --bg-danger: #791f1f;
-        --fill-accent: #378add;
-        --fill-accent-hover: #85b7eb;
-        --on-accent: #ffffff;
+        --surface-0: #1a1a18; --surface-1: #232320; --surface-2: #2c2c2a;
+        --text-primary: #f0ede8; --text-secondary: #a8a59f; --text-muted: #6b6966;
+        --text-accent: #85b7eb; --text-success: #97c459; --text-warning: #ef9f27; --text-danger: #f09595;
+        --border: rgba(255,255,255,0.1); --border-strong: rgba(255,255,255,0.18); --border-accent: #185fa5;
+        --bg-accent: #0c447c; --bg-success: #27500a; --bg-warning: #633806; --bg-danger: #791f1f;
+        --fill-accent: #378add; --fill-accent-hover: #85b7eb; --on-accent: #fff;
       }
     }
-
-    body {
-      font-family: var(--font-sans);
-      background: var(--surface-0);
-      color: var(--text-primary);
-      min-height: 100vh;
-      padding: 2rem 1rem;
-    }
-
-    .app {
-      max-width: 640px;
-      margin: 0 auto;
-    }
-
-    .header { margin-bottom: 2rem; }
+    body { font-family: var(--font-sans); background: var(--surface-0); color: var(--text-primary); min-height: 100vh; padding: 2rem 1rem; }
+    .app { max-width: 660px; margin: 0 auto; }
+    .header { margin-bottom: 1.5rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .header h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
     .header p { font-size: 14px; color: var(--text-secondary); }
-
-    .tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 0.5px solid var(--border);
-      margin-bottom: 1.5rem;
-    }
-
-    .tab {
-      padding: 10px 18px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      background: none;
-      border: none;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      font-family: var(--font-sans);
-      transition: color 0.15s;
-    }
-
+    .score-badge { background: var(--bg-accent); border: 0.5px solid var(--border-accent); border-radius: 12px; padding: 10px 16px; text-align: center; flex-shrink: 0; }
+    .score-badge .score-num { font-size: 26px; font-weight: 700; color: var(--text-accent); line-height: 1; }
+    .score-badge .score-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .score-badge .streak { font-size: 12px; color: var(--text-success); margin-top: 4px; font-weight: 500; }
+    .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 1.5rem; overflow-x: auto; }
+    .tab { padding: 10px 14px; font-size: 13px; font-weight: 500; color: var(--text-secondary); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: var(--font-sans); white-space: nowrap; transition: color 0.15s; }
     .tab.active { color: var(--text-accent); border-bottom-color: var(--fill-accent); }
     .tab:hover:not(.active) { color: var(--text-primary); }
-
     .panel { display: none; }
     .panel.active { display: block; }
-
-    .card {
-      background: var(--surface-2);
-      border: 0.5px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      color: var(--text-secondary);
-      font-weight: 500;
-      margin-bottom: 6px;
-    }
-
-    textarea, input[type="text"], select {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 14px;
-      font-family: var(--font-sans);
-      border: 0.5px solid var(--border-strong);
-      border-radius: var(--radius);
-      background: var(--surface-1);
-      color: var(--text-primary);
-      resize: vertical;
-      transition: border-color 0.15s;
-    }
-
-    textarea:focus, input[type="text"]:focus, select:focus {
-      outline: none;
-      border-color: var(--fill-accent);
-    }
-
+    .card { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    label { display: block; font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 6px; }
+    textarea, input[type="text"], select { width: 100%; padding: 10px 12px; font-size: 14px; font-family: var(--font-sans); border: 0.5px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-1); color: var(--text-primary); resize: vertical; transition: border-color 0.15s; }
+    textarea:focus, input[type="text"]:focus, select:focus { outline: none; border-color: var(--fill-accent); }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
     .field { margin-bottom: 1rem; }
-
-    .btn {
-      padding: 9px 18px;
-      font-size: 14px;
-      font-weight: 500;
-      border: 0.5px solid var(--border-strong);
-      border-radius: var(--radius);
-      background: none;
-      color: var(--text-primary);
-      cursor: pointer;
-      font-family: var(--font-sans);
-      transition: background 0.15s;
-    }
-
+    .btn { padding: 9px 18px; font-size: 14px; font-weight: 500; border: 0.5px solid var(--border-strong); border-radius: var(--radius); background: none; color: var(--text-primary); cursor: pointer; font-family: var(--font-sans); transition: background 0.15s; }
     .btn:hover { background: var(--surface-1); }
-
-    .btn.primary {
-      background: var(--fill-accent);
-      color: var(--on-accent);
-      border-color: var(--fill-accent);
-    }
-
+    .btn.primary { background: var(--fill-accent); color: var(--on-accent); border-color: var(--fill-accent); }
     .btn.primary:hover { background: var(--fill-accent-hover); border-color: var(--fill-accent-hover); }
+    .btn.success { background: var(--bg-success); color: var(--text-success); border-color: var(--text-success); }
     .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-
     .btn-sm { font-size: 12px; padding: 5px 12px; }
-
     .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-
-    .result-box {
-      background: var(--bg-accent);
-      border: 0.5px solid var(--border-accent);
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-top: 1rem;
-    }
-
-    .result-verdict {
-      font-size: 17px;
-      font-weight: 600;
-      color: var(--text-accent);
-      margin-bottom: 10px;
-      line-height: 1.4;
-    }
-
-    .result-reasoning {
-      font-size: 14px;
-      color: var(--text-primary);
-      line-height: 1.7;
-    }
-
-    .result-trend {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 0.5px solid var(--border-accent);
-    }
-
-    .result-actions {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 0.5px solid var(--border-accent);
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .history-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 14px 0;
-      border-bottom: 0.5px solid var(--border);
-    }
-
+    .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .preset-btn { padding: 6px 14px; font-size: 13px; border: 0.5px solid var(--border-strong); border-radius: 20px; background: var(--surface-1); color: var(--text-secondary); cursor: pointer; font-family: var(--font-sans); transition: all 0.15s; }
+    .preset-btn:hover { background: var(--bg-accent); color: var(--text-accent); border-color: var(--border-accent); }
+    .result-box { background: var(--bg-accent); border: 0.5px solid var(--border-accent); border-radius: 12px; padding: 1.25rem; margin-top: 1rem; }
+    .result-verdict { font-size: 17px; font-weight: 600; color: var(--text-accent); margin-bottom: 10px; line-height: 1.4; }
+    .result-reasoning { font-size: 14px; color: var(--text-primary); line-height: 1.7; }
+    .result-trend { font-size: 13px; color: var(--text-secondary); margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border-accent); }
+    .result-actions { margin-top: 14px; padding-top: 14px; border-top: 0.5px solid var(--border-accent); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .gut-check { background: var(--surface-1); border: 0.5px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1rem; }
+    .gut-check p { font-size: 14px; font-weight: 500; margin-bottom: 10px; }
+    .gut-options { display: flex; gap: 8px; flex-wrap: wrap; }
+    .gut-btn { padding: 8px 16px; font-size: 13px; border: 0.5px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-2); color: var(--text-primary); cursor: pointer; font-family: var(--font-sans); }
+    .gut-btn:hover { background: var(--bg-accent); }
+    .gut-result { margin-top: 10px; font-size: 13px; padding: 10px 12px; border-radius: var(--radius); }
+    .gut-match { background: var(--bg-success); color: var(--text-success); }
+    .gut-diff { background: var(--bg-warning); color: var(--text-warning); }
+    .history-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 0.5px solid var(--border); }
     .history-item:last-child { border-bottom: none; }
-
-    .outcome-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 20px;
-      white-space: nowrap;
-      margin-top: 2px;
-      flex-shrink: 0;
-    }
-
+    .outcome-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; margin-top: 2px; flex-shrink: 0; }
     .outcome-great { background: var(--bg-success); color: var(--text-success); }
-    .outcome-ok    { background: var(--bg-warning); color: var(--text-warning); }
-    .outcome-bad   { background: var(--bg-danger);  color: var(--text-danger); }
-
+    .outcome-ok { background: var(--bg-warning); color: var(--text-warning); }
+    .outcome-bad { background: var(--bg-danger); color: var(--text-danger); }
     .history-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
     .history-detail { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
     .history-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
-
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--text-muted);
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      margin-right: 6px;
-      vertical-align: -2px;
-    }
-
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-size: 14px; line-height: 1.7; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: -2px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .insight-box {
-      background: var(--surface-1);
-      border: 0.5px solid var(--border);
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-      margin-bottom: 1rem;
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.7;
-    }
-
-    .confirmation-msg {
-      margin-top: 12px;
-      font-size: 13px;
-      color: var(--text-success);
-      display: none;
-    }
-
-    .count-badge {
-      font-size: 11px;
-      background: var(--bg-accent);
-      color: var(--text-accent);
-      padding: 1px 7px;
-      border-radius: 10px;
-      margin-left: 4px;
-    }
-
-    .error-box {
-      background: var(--bg-danger);
-      border: 0.5px solid var(--text-danger);
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-      margin-top: 1rem;
-      font-size: 14px;
-      color: var(--text-danger);
-    }
-
-    @media (max-width: 480px) {
-      .row { grid-template-columns: 1fr; }
-      .tab { padding: 8px 12px; font-size: 13px; }
-    }
+    .insight-box { background: var(--surface-1); border: 0.5px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+    .confirmation-msg { margin-top: 12px; font-size: 13px; color: var(--text-success); display: none; }
+    .count-badge { font-size: 11px; background: var(--bg-accent); color: var(--text-accent); padding: 1px 7px; border-radius: 10px; margin-left: 4px; }
+    .error-box { background: var(--bg-danger); border: 0.5px solid var(--text-danger); border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1rem; font-size: 14px; color: var(--text-danger); }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
+    .stat-card { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 700; }
+    .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .stat-great { color: var(--text-success); }
+    .stat-warn { color: var(--text-warning); }
+    .stat-bad { color: var(--text-danger); }
+    .chart-card { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    .chart-card h3 { font-size: 14px; font-weight: 500; margin-bottom: 1rem; color: var(--text-secondary); }
+    .chart-wrap { position: relative; height: 180px; }
+    .mood-warn { background: var(--bg-warning); border: 0.5px solid var(--border-accent); border-radius: var(--radius); padding: 8px 12px; font-size: 13px; color: var(--text-warning); margin-bottom: 1rem; display: none; }
+    .share-box { background: var(--surface-1); border: 0.5px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1rem; }
+    .share-box p { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .share-link { font-size: 12px; color: var(--text-accent); word-break: break-all; font-family: monospace; background: var(--surface-0); padding: 6px 10px; border-radius: var(--radius); display: block; margin-bottom: 8px; }
+    .export-btn { font-size: 12px; padding: 5px 12px; }
+    .voice-btn { padding: 9px 14px; font-size: 18px; border: 0.5px solid var(--border-strong); border-radius: var(--radius); background: none; cursor: pointer; transition: background 0.15s; }
+    .voice-btn:hover { background: var(--surface-1); }
+    .voice-btn.listening { background: var(--bg-danger); border-color: var(--text-danger); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-btn { padding: 5px 12px; font-size: 12px; border: 0.5px solid var(--border); border-radius: 20px; background: none; color: var(--text-secondary); cursor: pointer; font-family: var(--font-sans); }
+    .filter-btn.active { background: var(--bg-accent); color: var(--text-accent); border-color: var(--border-accent); }
+    @media (max-width: 480px) { .row { grid-template-columns: 1fr; } .tab { padding: 8px 10px; font-size: 12px; } .stat-grid { grid-template-columns: repeat(3,1fr); } }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="header">
+<div class="app">
+  <div class="header">
+    <div>
       <h1>Your decision advisor</h1>
       <p>Learns from your past choices to help you decide better today.</p>
     </div>
-
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('decide')">Decide now</button>
-      <button class="tab" onclick="switchTab('log')">Log a past decision</button>
-      <button class="tab" onclick="switchTab('history')">History <span class="count-badge" id="history-count">0</span></button>
-    </div>
-
-    <!-- DECIDE TAB -->
-    <div id="panel-decide" class="panel active">
-      <div class="card">
-        <div class="field">
-          <label>What are you trying to decide?</label>
-          <textarea id="decision-q" rows="2" placeholder="e.g. Should I watch a movie or go for a walk tonight?"></textarea>
-        </div>
-        <div class="row">
-          <div>
-            <label>Category</label>
-            <select id="decision-cat">
-              <option value="">Any</option>
-              <option value="food">Food / eat</option>
-              <option value="entertainment">What to watch</option>
-              <option value="productivity">Work / study</option>
-              <option value="social">Social / plans</option>
-              <option value="lifestyle">Lifestyle / health</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label>Your mood right now</label>
-            <select id="decision-mood">
-              <option value="neutral">Neutral</option>
-              <option value="tired">Tired / low energy</option>
-              <option value="energized">Energized</option>
-              <option value="stressed">Stressed</option>
-              <option value="bored">Bored</option>
-              <option value="social">Social / outgoing</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label>Any constraints? (optional)</label>
-          <input type="text" id="decision-constraints" placeholder="e.g. only 1 hour free, on a budget, at home..." />
-        </div>
-        <div class="btn-row">
-          <button class="btn primary" id="decide-btn" onclick="getDecision()">Get a recommendation</button>
-        </div>
-      </div>
-      <div id="decision-result"></div>
-    </div>
-
-    <!-- LOG TAB -->
-    <div id="panel-log" class="panel">
-      <div class="card">
-        <div class="field">
-          <label>What decision did you make?</label>
-          <textarea id="log-decision" rows="2" placeholder="e.g. I ordered pizza instead of cooking"></textarea>
-        </div>
-        <div class="row">
-          <div>
-            <label>Category</label>
-            <select id="log-cat">
-              <option value="food">Food / eat</option>
-              <option value="entertainment">What to watch</option>
-              <option value="productivity">Work / study</option>
-              <option value="social">Social / plans</option>
-              <option value="lifestyle">Lifestyle / health</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label>How did it turn out?</label>
-            <select id="log-outcome">
-              <option value="great">Great — would do again</option>
-              <option value="ok">OK — fine but not ideal</option>
-              <option value="bad">Bad — regretted it</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label>What did you learn? (optional)</label>
-          <input type="text" id="log-notes" placeholder="e.g. I always feel worse after late night food..." />
-        </div>
-        <div class="btn-row">
-          <button class="btn primary" onclick="logDecision()">Save to history</button>
-        </div>
-        <div class="confirmation-msg" id="log-confirmation">✓ Saved! This will inform future recommendations.</div>
-      </div>
-    </div>
-
-    <!-- HISTORY TAB -->
-    <div id="panel-history" class="panel">
-      <div class="insight-box" id="insights-box" style="display:none;" id="insights-text"></div>
-      <div id="history-list"></div>
+    <div class="score-badge" id="score-badge">
+      <div class="score-num" id="score-display">0</div>
+      <div class="score-label">Decision score</div>
+      <div class="streak" id="streak-display"></div>
     </div>
   </div>
 
-  <script>
-    let history = [];
-    try { history = JSON.parse(localStorage.getItem('decision_history') || '[]'); } catch(e) {}
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('decide')">Decide now</button>
+    <button class="tab" onclick="switchTab('log')">Log decision</button>
+    <button class="tab" onclick="switchTab('history')">History <span class="count-badge" id="history-count">0</span></button>
+    <button class="tab" onclick="switchTab('insights')">Insights</button>
+  </div>
 
-    function saveHistory() {
-      try { localStorage.setItem('decision_history', JSON.stringify(history)); } catch(e) {}
-    }
-
-    function switchTab(name) {
-      ['decide','log','history'].forEach((n, i) => {
-        document.querySelectorAll('.tab')[i].classList.toggle('active', n === name);
-        document.getElementById('panel-' + n).classList.toggle('active', n === name);
-      });
-      if (name === 'history') renderHistory();
-    }
-
-    function logDecision() {
-      const decision = document.getElementById('log-decision').value.trim();
-      if (!decision) return;
-      history.unshift({
-        id: Date.now(),
-        decision,
-        category: document.getElementById('log-cat').value,
-        outcome: document.getElementById('log-outcome').value,
-        notes: document.getElementById('log-notes').value.trim(),
-        date: new Date().toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
-      });
-      saveHistory();
-      document.getElementById('history-count').textContent = history.length;
-      const conf = document.getElementById('log-confirmation');
-      conf.style.display = 'block';
-      document.getElementById('log-decision').value = '';
-      document.getElementById('log-notes').value = '';
-      setTimeout(() => { conf.style.display = 'none'; }, 3000);
-    }
-
-    function getMostCommonCategory() {
-      const counts = {};
-      history.forEach(h => { counts[h.category] = (counts[h.category] || 0) + 1; });
-      return Object.entries(counts).sort((a,b) => b[1]-a[1])[0]?.[0] || 'general';
-    }
-
-    function renderHistory() {
-      const list = document.getElementById('history-list');
-      const box = document.getElementById('insights-box');
-      if (!history.length) {
-        list.innerHTML = '<div class="empty-state">No decisions logged yet.<br>Add your first one in "Log a past decision".</div>';
-        box.style.display = 'none';
-        return;
-      }
-      if (history.length >= 3) {
-        const great = history.filter(h => h.outcome === 'great').length;
-        const bad = history.filter(h => h.outcome === 'bad').length;
-        box.style.display = 'block';
-        box.innerHTML = `<strong style="color:var(--text-primary)">Your patterns:</strong> Out of ${history.length} logged decisions, ${great} turned out great and ${bad} you regretted. Most logged category: <strong style="color:var(--text-primary)">${getMostCommonCategory()}</strong>. The AI uses this to weight its advice.`;
-      } else {
-        box.style.display = 'none';
-      }
-      list.innerHTML = history.map(h => `
-        <div class="history-item">
-          <div style="flex:1; min-width:0;">
-            <div class="history-title">${h.decision}</div>
-            ${h.notes ? `<div class="history-detail">${h.notes}</div>` : ''}
-            <div class="history-meta">${h.date} · ${h.category}</div>
-          </div>
-          <span class="outcome-badge outcome-${h.outcome}">${h.outcome === 'great' ? 'Great' : h.outcome === 'ok' ? 'OK' : 'Regretted'}</span>
+  <!-- DECIDE TAB -->
+  <div id="panel-decide" class="panel active">
+    <div id="mood-warn" class="mood-warn"></div>
+    <div class="card">
+      <label style="margin-bottom:8px;">Quick pick</label>
+      <div class="presets">
+        <button class="preset-btn" onclick="usePreset('What should I eat right now?','food')">🍽️ What to eat</button>
+        <button class="preset-btn" onclick="usePreset('What should I watch tonight?','entertainment')">🎬 What to watch</button>
+        <button class="preset-btn" onclick="usePreset('How should I spend my free time right now?','lifestyle')">✨ Free time</button>
+        <button class="preset-btn" onclick="usePreset('Should I work or take a break right now?','productivity')">💼 Work or break</button>
+        <button class="preset-btn" onclick="usePreset('Should I go out or stay in tonight?','social')">🏠 Go out or stay in</button>
+      </div>
+      <div class="field">
+        <label>What are you trying to decide?</label>
+        <div style="display:flex; gap:8px; align-items:flex-start;">
+          <textarea id="decision-q" rows="2" placeholder="e.g. Should I watch a movie or go for a walk tonight?" style="flex:1;"></textarea>
+          <button class="voice-btn" id="voice-btn" onclick="toggleVoice()" title="Speak your question">🎤</button>
         </div>
-      `).join('');
-    }
+      </div>
+      <div class="row">
+        <div>
+          <label>Category</label>
+          <select id="decision-cat">
+            <option value="">Any</option>
+            <option value="food">Food / eat</option>
+            <option value="entertainment">What to watch</option>
+            <option value="productivity">Work / study</option>
+            <option value="social">Social / plans</option>
+            <option value="lifestyle">Lifestyle / health</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Your mood right now</label>
+          <select id="decision-mood">
+            <option value="neutral">Neutral</option>
+            <option value="tired">Tired / low energy</option>
+            <option value="energized">Energized</option>
+            <option value="stressed">Stressed</option>
+            <option value="bored">Bored</option>
+            <option value="social">Social / outgoing</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Any constraints? (optional)</label>
+        <input type="text" id="decision-constraints" placeholder="e.g. only 1 hour free, on a budget, at home..." />
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="decide-btn" onclick="getDecision()">Get a recommendation</button>
+      </div>
+    </div>
+    <div id="gut-check-box" style="display:none;" class="gut-check">
+      <p>What's your gut telling you?</p>
+      <div class="gut-options" id="gut-options"></div>
+      <div id="gut-result" style="display:none;" class="gut-result"></div>
+    </div>
+    <div id="decision-result"></div>
+  </div>
 
-    function buildHistoryContext() {
-      if (!history.length) return 'No past decisions logged yet.';
-      return history.slice(0, 10).map(h =>
-        `- "${h.decision}" (${h.category}) → outcome: ${h.outcome}${h.notes ? '. Notes: ' + h.notes : ''}`
-      ).join('\n');
-    }
+  <!-- LOG TAB -->
+  <div id="panel-log" class="panel">
+    <div class="card">
+      <div class="field">
+        <label>What decision did you make?</label>
+        <textarea id="log-decision" rows="2" placeholder="e.g. I ordered pizza instead of cooking"></textarea>
+      </div>
+      <div class="row">
+        <div>
+          <label>Category</label>
+          <select id="log-cat">
+            <option value="food">Food / eat</option>
+            <option value="entertainment">What to watch</option>
+            <option value="productivity">Work / study</option>
+            <option value="social">Social / plans</option>
+            <option value="lifestyle">Lifestyle / health</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label>How did it turn out?</label>
+          <select id="log-outcome">
+            <option value="great">Great — would do again</option>
+            <option value="ok">OK — fine but not ideal</option>
+            <option value="bad">Bad — regretted it</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Mood when you decided (optional)</label>
+        <select id="log-mood">
+          <option value="">Don't remember</option>
+          <option value="neutral">Neutral</option>
+          <option value="tired">Tired</option>
+          <option value="energized">Energized</option>
+          <option value="stressed">Stressed</option>
+          <option value="bored">Bored</option>
+          <option value="social">Social</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>What did you learn? (optional)</label>
+        <input type="text" id="log-notes" placeholder="e.g. I always feel worse after late night food..." />
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="logDecision()">Save to history</button>
+      </div>
+      <div class="confirmation-msg" id="log-confirmation">✓ Saved! This will inform future recommendations.</div>
+    </div>
+  </div>
 
-    function escapeAttr(s) {
-      return s.replace(/'/g, "\\'").replace(/"/g, '&quot;').substring(0, 80);
-    }
+  <!-- HISTORY TAB -->
+  <div id="panel-history" class="panel">
+    <div class="insight-box" id="insights-box" style="display:none;"></div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('great',this)">Great</button>
+      <button class="filter-btn" onclick="setFilter('ok',this)">OK</button>
+      <button class="filter-btn" onclick="setFilter('bad',this)">Regretted</button>
+      <button class="filter-btn export-btn" onclick="exportCSV()" style="margin-left:auto;">⬇ Export CSV</button>
+    </div>
+    <div id="history-list"></div>
+  </div>
 
-    async function getDecision() {
-      const question = document.getElementById('decision-q').value.trim();
-      if (!question) return;
-      const mood = document.getElementById('decision-mood').value;
-      const category = document.getElementById('decision-cat').value;
-      const constraints = document.getElementById('decision-constraints').value.trim();
-      const btn = document.getElementById('decide-btn');
-      const resultDiv = document.getElementById('decision-result');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> Thinking...';
-      resultDiv.innerHTML = '';
+  <!-- INSIGHTS TAB -->
+  <div id="panel-insights" class="panel">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num stat-great" id="ins-great">0</div><div class="stat-label">Great calls</div></div>
+      <div class="stat-card"><div class="stat-num stat-warn" id="ins-ok">0</div><div class="stat-label">Just OK</div></div>
+      <div class="stat-card"><div class="stat-num stat-bad" id="ins-bad">0</div><div class="stat-label">Regretted</div></div>
+    </div>
+    <div class="chart-card">
+      <h3>Decisions by category</h3>
+      <div class="chart-wrap"><canvas id="chart-cat"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Mood vs outcome — when do you decide best?</h3>
+      <div class="chart-wrap"><canvas id="chart-mood"></canvas></div>
+    </div>
+    <div class="insight-box" id="ai-insight" style="display:none;"></div>
+    <div class="btn-row" style="margin-top:0.5rem;">
+      <button class="btn primary" onclick="generateAIInsight()">Generate AI insight from my data</button>
+    </div>
+  </div>
+</div>
 
-      const prompt = `You are a sharp, honest personal decision advisor. You study someone's past decisions and give them one confident, specific recommendation right now — no wishy-washy "it depends".
+<script>
+let decisions = [];
+let currentFilter = 'all';
+let pendingQuestion = '';
+let pendingAIVerdict = '';
+let recognizing = false;
+let recognition = null;
+let catChart = null;
+let moodChart = null;
 
-USER'S PAST DECISIONS:
+try { decisions = JSON.parse(localStorage.getItem('decisions_v2') || '[]'); } catch(e) {}
+
+function save() {
+  try { localStorage.setItem('decisions_v2', JSON.stringify(decisions)); } catch(e) {}
+  updateScore();
+  document.getElementById('history-count').textContent = decisions.length;
+}
+
+function updateScore() {
+  const great = decisions.filter(d => d.outcome === 'great').length;
+  const bad = decisions.filter(d => d.outcome === 'bad').length;
+  const total = decisions.length;
+  const score = total === 0 ? 0 : Math.round(((great * 2 + (total - great - bad)) / (total * 2)) * 100);
+  document.getElementById('score-display').textContent = score;
+  const streak = calcStreak();
+  const streakEl = document.getElementById('streak-display');
+  streakEl.textContent = streak > 1 ? `🔥 ${streak} great in a row` : '';
+}
+
+function calcStreak() {
+  let s = 0;
+  for (let d of decisions) {
+    if (d.outcome === 'great') s++;
+    else break;
+  }
+  return s;
+}
+
+function switchTab(name) {
+  ['decide','log','history','insights'].forEach((n,i) => {
+    document.querySelectorAll('.tab')[i].classList.toggle('active', n === name);
+    document.getElementById('panel-' + n).classList.toggle('active', n === name);
+  });
+  if (name === 'history') renderHistory();
+  if (name === 'insights') renderInsights();
+}
+
+function usePreset(q, cat) {
+  document.getElementById('decision-q').value = q;
+  document.getElementById('decision-cat').value = cat;
+  document.getElementById('decision-q').focus();
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistory();
+}
+
+function checkMoodWarning() {
+  const mood = document.getElementById('decision-mood').value;
+  const moodBadDecisions = decisions.filter(d => d.mood === mood && d.outcome === 'bad').length;
+  const moodTotal = decisions.filter(d => d.mood === mood).length;
+  const el = document.getElementById('mood-warn');
+  if (moodTotal >= 3 && moodBadDecisions / moodTotal >= 0.5) {
+    el.textContent = `⚠️ Heads up — you tend to make decisions you regret when you're feeling ${mood}. Take an extra moment.`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('decision-mood').addEventListener('change', checkMoodWarning);
+});
+
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert("Sorry, your browser doesn't support voice input. Try Chrome.");
+    return;
+  }
+  if (recognizing) {
+    recognition.stop();
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-IN';
+  recognition.interimResults = false;
+  recognition.onstart = () => { recognizing = true; document.getElementById('voice-btn').classList.add('listening'); };
+  recognition.onend = () => { recognizing = false; document.getElementById('voice-btn').classList.remove('listening'); };
+  recognition.onresult = e => {
+    document.getElementById('decision-q').value = e.results[0][0].transcript;
+  };
+  recognition.start();
+}
+
+function logDecision(decision, category, outcome, mood, notes) {
+  if (decision === undefined) {
+    decision = document.getElementById('log-decision').value.trim();
+    if (!decision) return;
+    category = document.getElementById('log-cat').value;
+    outcome = document.getElementById('log-outcome').value;
+    mood = document.getElementById('log-mood').value;
+    notes = document.getElementById('log-notes').value.trim();
+    document.getElementById('log-decision').value = '';
+    document.getElementById('log-notes').value = '';
+    const conf = document.getElementById('log-confirmation');
+    conf.style.display = 'block';
+    setTimeout(() => { conf.style.display = 'none'; }, 3000);
+  }
+  decisions.unshift({ id: Date.now(), decision, category, outcome, mood: mood || '', notes: notes || '', date: new Date().toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }), ts: Date.now() });
+  save();
+}
+
+function quickLog(decision, category, outcome) {
+  logDecision(decision, category, outcome, document.getElementById('decision-mood').value, '');
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  const box = document.getElementById('insights-box');
+  const filtered = currentFilter === 'all' ? decisions : decisions.filter(d => d.outcome === currentFilter);
+  if (!decisions.length) {
+    list.innerHTML = '<div class="empty-state">No decisions logged yet.<br>Add your first one in "Log decision".</div>';
+    box.style.display = 'none';
+    return;
+  }
+  if (decisions.length >= 3) {
+    const great = decisions.filter(d => d.outcome === 'great').length;
+    const bad = decisions.filter(d => d.outcome === 'bad').length;
+    const topCat = topCategory();
+    box.style.display = 'block';
+    box.innerHTML = `Out of <strong style="color:var(--text-primary)">${decisions.length}</strong> decisions logged — <strong style="color:var(--text-success)">${great} great</strong>, <strong style="color:var(--text-danger)">${bad} regretted</strong>. Most logged: <strong style="color:var(--text-primary)">${topCat}</strong>.`;
+  } else { box.style.display = 'none'; }
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state">No decisions match this filter.</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(d => `
+    <div class="history-item">
+      <div style="flex:1;min-width:0;">
+        <div class="history-title">${escHtml(d.decision)}</div>
+        ${d.notes ? `<div class="history-detail">${escHtml(d.notes)}</div>` : ''}
+        <div class="history-meta">${d.date} · ${d.category}${d.mood ? ' · felt ' + d.mood : ''}</div>
+      </div>
+      <span class="outcome-badge outcome-${d.outcome}">${d.outcome === 'great' ? 'Great' : d.outcome === 'ok' ? 'OK' : 'Regretted'}</span>
+    </div>`).join('');
+}
+
+function renderInsights() {
+  const great = decisions.filter(d => d.outcome === 'great').length;
+  const ok = decisions.filter(d => d.outcome === 'ok').length;
+  const bad = decisions.filter(d => d.outcome === 'bad').length;
+  document.getElementById('ins-great').textContent = great;
+  document.getElementById('ins-ok').textContent = ok;
+  document.getElementById('ins-bad').textContent = bad;
+  renderCatChart();
+  renderMoodChart();
+}
+
+function renderCatChart() {
+  const cats = ['food','entertainment','productivity','social','lifestyle','other'];
+  const labels = ['Food','Watch','Work','Social','Lifestyle','Other'];
+  const greatData = cats.map(c => decisions.filter(d => d.category === c && d.outcome === 'great').length);
+  const badData = cats.map(c => decisions.filter(d => d.category === c && d.outcome === 'bad').length);
+  const ctx = document.getElementById('chart-cat').getContext('2d');
+  if (catChart) catChart.destroy();
+  catChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Great', data: greatData, backgroundColor: '#639922', borderRadius: 4 },
+        { label: 'Regretted', data: badData, backgroundColor: '#E24B4A', borderRadius: 4 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+}
+
+function renderMoodChart() {
+  const moods = ['neutral','tired','energized','stressed','bored','social'];
+  const scores = moods.map(m => {
+    const mDecisions = decisions.filter(d => d.mood === m);
+    if (!mDecisions.length) return 0;
+    const score = mDecisions.filter(d => d.outcome === 'great').length / mDecisions.length * 100;
+    return Math.round(score);
+  });
+  const ctx = document.getElementById('chart-mood').getContext('2d');
+  if (moodChart) moodChart.destroy();
+  moodChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: moods.map(m => m[0].toUpperCase() + m.slice(1)),
+      datasets: [{ label: '% great decisions', data: scores, backgroundColor: scores.map(s => s >= 60 ? '#639922' : s >= 40 ? '#BA7517' : '#E24B4A'), borderRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } } }
+  });
+}
+
+async function generateAIInsight() {
+  if (decisions.length < 3) { alert('Log at least 3 decisions first!'); return; }
+  const box = document.getElementById('ai-insight');
+  box.style.display = 'block';
+  box.innerHTML = '<span style="color:var(--text-muted)">Analysing your patterns...</span>';
+  const summary = decisions.slice(0,20).map(d => `${d.category}|${d.mood||'?'}|${d.outcome}`).join(', ');
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 300,
+        messages: [{ role: 'user', content: `Based on this person's decision history (category|mood|outcome): ${summary}\n\nWrite 2-3 sharp, specific insights about their decision patterns. Be direct and personal. No bullet points, just plain sentences. Max 80 words.` }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.find(b => b.type === 'text')?.text || '';
+    box.innerHTML = `<strong style="color:var(--text-primary)">AI pattern analysis:</strong> ${text}`;
+  } catch(e) {
+    box.innerHTML = 'Could not generate insight. Check your connection.';
+  }
+}
+
+function topCategory() {
+  const c = {};
+  decisions.forEach(d => { c[d.category] = (c[d.category]||0)+1; });
+  return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0] || 'general';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escAttr(s) { return String(s).replace(/'/g,"\\'").substring(0,80); }
+
+function buildHistoryContext() {
+  if (!decisions.length) return 'No past decisions logged yet.';
+  return decisions.slice(0,12).map(d =>
+    `- "${d.decision}" (${d.category}, felt ${d.mood||'unknown'}) → ${d.outcome}${d.notes ? '. Note: '+d.notes : ''}`
+  ).join('\n');
+}
+
+function showGutCheck(question, aiVerdict) {
+  pendingQuestion = question;
+  pendingAIVerdict = aiVerdict;
+  const box = document.getElementById('gut-check-box');
+  const opts = document.getElementById('gut-options');
+  document.getElementById('gut-result').style.display = 'none';
+  const options = question.toLowerCase().includes(' or ') ?
+    question.split(/\s+or\s+/i).slice(0,2).map(s => s.replace(/^(should i|i should|do i)/i,'').trim()) :
+    ['Option A', 'Option B'];
+  opts.innerHTML = options.map((o,i) =>
+    `<button class="gut-btn" onclick="revealAI('${escAttr(o)}')">${o.length > 30 ? o.substring(0,30)+'…' : o}</button>`
+  ).join('') + `<button class="gut-btn" onclick="revealAI('not sure')">Not sure</button>`;
+  box.style.display = 'block';
+}
+
+function revealAI(gut) {
+  const res = document.getElementById('gut-result');
+  const match = pendingAIVerdict.toLowerCase().includes(gut.toLowerCase().split(' ')[0]);
+  res.className = 'gut-result ' + (match ? 'gut-match' : 'gut-diff');
+  res.textContent = match
+    ? `✓ Your gut and the AI agree! That's a confident signal.`
+    : `Interesting — your gut said "${gut}" but the AI recommends something different. Worth thinking about why.`;
+  res.style.display = 'block';
+}
+
+function generateShareLink(verdict, question) {
+  const text = encodeURIComponent(`I asked my Decision Advisor: "${question}"\n\nIt said: "${verdict}"\n\nTry it:`);
+  return `https://twitter.com/intent/tweet?text=${text}`;
+}
+
+function exportCSV() {
+  if (!decisions.length) { alert('Nothing to export yet!'); return; }
+  const rows = [['Date','Decision','Category','Mood','Outcome','Notes']];
+  decisions.forEach(d => rows.push([d.date, d.decision, d.category, d.mood||'', d.outcome, d.notes||'']));
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'decisions.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function getDecision() {
+  const question = document.getElementById('decision-q').value.trim();
+  if (!question) return;
+  const mood = document.getElementById('decision-mood').value;
+  const category = document.getElementById('decision-cat').value;
+  const constraints = document.getElementById('decision-constraints').value.trim();
+  const btn = document.getElementById('decide-btn');
+  const resultDiv = document.getElementById('decision-result');
+  document.getElementById('gut-check-box').style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Thinking...';
+  resultDiv.innerHTML = '';
+  checkMoodWarning();
+
+  const prompt = `You are a sharp, honest personal decision advisor. Study this person's history and give ONE confident recommendation — no "it depends".
+
+PAST DECISIONS:
 ${buildHistoryContext()}
 
-CURRENT SITUATION:
-- Decision needed: ${question}
+NOW:
+- Question: ${question}
 - Category: ${category || 'general'}
-- Current mood: ${mood}
-- Constraints: ${constraints || 'none mentioned'}
+- Mood: ${mood}
+- Constraints: ${constraints || 'none'}
 - Time: ${new Date().toLocaleString('en-IN', { weekday:'long', hour:'numeric', minute:'2-digit', hour12:true })}
 
-Give ONE confident recommendation. Be direct and specific. Reference their past patterns if relevant.
-
-Respond ONLY in this JSON format, no markdown, no preamble:
+Respond ONLY as JSON, no markdown:
 {
-  "verdict": "Your clear recommendation in one sentence",
-  "reasoning": "2-3 sentences explaining why, referencing past patterns if available",
-  "pattern": "One insight about a pattern from their history, or null if no history yet"
+  "verdict": "One clear recommendation sentence",
+  "reasoning": "2-3 sentences, reference past patterns if available",
+  "pattern": "One pattern insight from history or null",
+  "options": ["option 1 short label", "option 2 short label"]
 }`;
 
-      try {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 1000,
-            messages: [{ role: 'user', content: prompt }]
-          })
-        });
-        const data = await res.json();
-        const text = (data.content?.find(b => b.type === 'text')?.text || '').replace(/```json|```/g, '').trim();
-        const p = JSON.parse(text);
-        const cat = category || 'other';
-        const qAttr = escapeAttr(question);
-        resultDiv.innerHTML = `
-          <div class="result-box">
-            <div class="result-verdict">→ ${p.verdict}</div>
-            <div class="result-reasoning">${p.reasoning}</div>
-            ${p.pattern ? `<div class="result-trend">📈 ${p.pattern}</div>` : ''}
-            <div class="result-actions">
-              <span style="font-size:12px; color:var(--text-muted); align-self:center;">How did it go?</span>
-              <button class="btn btn-sm" onclick="quickLog('${qAttr}','${cat}','great')">Great ✓</button>
-              <button class="btn btn-sm" onclick="quickLog('${qAttr}','${cat}','ok')">Just OK</button>
-              <button class="btn btn-sm" onclick="quickLog('${qAttr}','${cat}','bad')">Regretted it</button>
-            </div>
-          </div>`;
-      } catch(e) {
-        resultDiv.innerHTML = `<div class="error-box">Couldn't get a recommendation — check your internet connection and try again.</div>`;
-      }
-      btn.disabled = false;
-      btn.innerHTML = 'Get a recommendation';
-    }
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 600, messages: [{ role:'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const text = (data.content?.find(b => b.type==='text')?.text||'').replace(/```json|```/g,'').trim();
+    const p = JSON.parse(text);
+    const cat = category || 'other';
+    const qAttr = escAttr(question);
+    const shareUrl = generateShareLink(p.verdict, question);
+    resultDiv.innerHTML = `
+      <div class="result-box">
+        <div class="result-verdict">→ ${escHtml(p.verdict)}</div>
+        <div class="result-reasoning">${escHtml(p.reasoning)}</div>
+        ${p.pattern ? `<div class="result-trend">📈 ${escHtml(p.pattern)}</div>` : ''}
+        <div class="result-actions">
+          <span style="font-size:12px;color:var(--text-muted);align-self:center;">How did it go?</span>
+          <button class="btn btn-sm" onclick="quickLog('${qAttr}','${cat}','great');this.parentElement.innerHTML='<span style=color:var(--text-success)>✓ Logged as great!</span>'">Great ✓</button>
+          <button class="btn btn-sm" onclick="quickLog('${qAttr}','${cat}','ok');this.parentElement.innerHTML='<span style=color:var(--text-warning)>✓ Logged as OK</span>'">Just OK</button>
+          <button class="btn btn-sm" onclick="quickLog('${qAttr}','${cat}','bad');this.parentElement.innerHTML='<span style=color:var(--text-danger)>✓ Logged</span>'">Regretted it</button>
+          <a href="${shareUrl}" target="_blank" class="btn btn-sm" style="text-decoration:none;margin-left:auto;">Share ↗</a>
+        </div>
+      </div>`;
+    showGutCheck(question, p.verdict);
+  } catch(e) {
+    resultDiv.innerHTML = `<div class="error-box">Couldn't get a recommendation — check your connection and try again.</div>`;
+  }
+  btn.disabled = false;
+  btn.innerHTML = 'Get a recommendation';
+}
 
-    function quickLog(decision, category, outcome) {
-      history.unshift({
-        id: Date.now(), decision, category, outcome, notes: '',
-        date: new Date().toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
-      });
-      saveHistory();
-      document.getElementById('history-count').textContent = history.length;
-    }
-
-    document.getElementById('history-count').textContent = history.length;
-  </script>
+updateScore();
+document.getElementById('history-count').textContent = decisions.length;
+</script>
 </body>
 </html>
