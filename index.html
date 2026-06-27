@@ -523,17 +523,15 @@ function buildHistoryContext() {
   ).join('\n');
 }
 
-function showGutCheck(question, aiVerdict) {
+function showGutCheck(question, aiVerdict, options) {
   pendingQuestion = question;
   pendingAIVerdict = aiVerdict;
   const box = document.getElementById('gut-check-box');
   const opts = document.getElementById('gut-options');
   document.getElementById('gut-result').style.display = 'none';
-  const options = question.toLowerCase().includes(' or ') ?
-    question.split(/\s+or\s+/i).slice(0,2).map(s => s.replace(/^(should i|i should|do i)/i,'').trim()) :
-    ['Option A', 'Option B'];
-  opts.innerHTML = options.map((o,i) =>
-    `<button class="gut-btn" onclick="revealAI('${escAttr(o)}')">${o.length > 30 ? o.substring(0,30)+'…' : o}</button>`
+  const realOptions = (options && options.length >= 2) ? options : ['Go for it', 'Skip it'];
+  opts.innerHTML = realOptions.map(o =>
+    `<button class="gut-btn" onclick="revealAI('${escAttr(o)}')">${escHtml(o)}</button>`
   ).join('') + `<button class="gut-btn" onclick="revealAI('not sure')">Not sure</button>`;
   box.style.display = 'block';
 }
@@ -595,7 +593,7 @@ Respond ONLY as JSON, no markdown:
   "verdict": "One clear recommendation sentence",
   "reasoning": "2-3 sentences, reference past patterns if available",
   "pattern": "One pattern insight from history or null",
-  "options": ["option 1 short label", "option 2 short label"]
+  "options": ["2-4 word label for the recommended option", "2-4 word label for the main alternative", "optional 3rd choice if relevant"]
 }`;
 
   try {
@@ -622,7 +620,7 @@ Respond ONLY as JSON, no markdown:
           <a href="${shareUrl}" target="_blank" class="btn btn-sm" style="text-decoration:none;margin-left:auto;">Share ↗</a>
         </div>
       </div>`;
-    showGutCheck(question, p.verdict);
+    showGutCheck(question, p.verdict, p.options);
   } catch(e) {
     resultDiv.innerHTML = `<div class="error-box">Couldn't get a recommendation — check your connection and try again.</div>`;
   }
